@@ -16,7 +16,7 @@ public class BananaAgent : Agent
     float effectTime;
     Rigidbody agentRb;
     private int bananas;
-
+    private float laser_length;
     // Speed of agent rotation.
     public float turnSpeed = 300;
 
@@ -28,8 +28,9 @@ public class BananaAgent : Agent
     public Material frozenMaterial;
     public GameObject myLaser;
     public bool contribute;
-    private RayPerception rayPer;
+    private RayPerception3D rayPer;
     public bool useVectorObs;
+
 
     public override void InitializeAgent()
     {
@@ -37,8 +38,10 @@ public class BananaAgent : Agent
         agentRb = GetComponent<Rigidbody>();
         Monitor.verticalOffset = 1f;
         myArea = area.GetComponent<BananaArea>();
-        rayPer = GetComponent<RayPerception>();
+        rayPer = GetComponent<RayPerception3D>();
         myAcademy = FindObjectOfType<BananaAcademy>();
+
+        SetResetParameters();
     }
 
     public override void CollectObservations()
@@ -103,7 +106,7 @@ public class BananaAgent : Agent
                 var rightAxis = (int)act[1];
                 var rotateAxis = (int)act[2];
                 var shootAxis = (int)act[3];
-                
+
                 switch (forwardAxis)
                 {
                     case 1:
@@ -113,7 +116,7 @@ public class BananaAgent : Agent
                         dirToGo = -transform.forward;
                         break;
                 }
-                
+
                 switch (rightAxis)
                 {
                     case 1:
@@ -131,7 +134,7 @@ public class BananaAgent : Agent
                         break;
                     case 2:
                         rotateDir = transform.up;
-                        break; 
+                        break;
                 }
                 switch (shootAxis)
                 {
@@ -157,8 +160,8 @@ public class BananaAgent : Agent
 
         if (shoot)
         {
-            myLaser.transform.localScale = new Vector3(1f, 1f, 1f);
-            Vector3 position = transform.TransformDirection(RayPerception.PolarToCartesian(25f, 90f));
+            myLaser.transform.localScale = new Vector3(1f, 1f, laser_length);
+            Vector3 position = transform.TransformDirection(RayPerception3D.PolarToCartesian(25f, 90f));
             Debug.DrawRay(transform.position, position, Color.red, 0f, true);
             RaycastHit hit;
             if (Physics.SphereCast(transform.position, 2f, position, out hit, 25f))
@@ -239,6 +242,8 @@ public class BananaAgent : Agent
                                          2f, Random.Range(-myArea.range, myArea.range))
             + area.transform.position;
         transform.rotation = Quaternion.Euler(new Vector3(0f, Random.Range(0, 360)));
+
+        SetResetParameters();
     }
 
     void OnCollisionEnter(Collision collision)
@@ -270,5 +275,23 @@ public class BananaAgent : Agent
     public override void AgentOnDone()
     {
 
+    }
+
+    public void SetLaserLengths()
+    {
+        laser_length = myAcademy.resetParameters.TryGetValue("laser_length", out laser_length) ? laser_length: 1.0f;
+    }
+
+    public void SetAgentScale()
+    {
+        float agentScale;
+        agentScale = myAcademy.resetParameters.TryGetValue("agent_scale", out agentScale) ? agentScale : 1.0f;
+        gameObject.transform.localScale = new Vector3(agentScale, agentScale, agentScale);
+    }
+
+    public void SetResetParameters()
+    {
+        SetLaserLengths();
+        SetAgentScale();
     }
 }
